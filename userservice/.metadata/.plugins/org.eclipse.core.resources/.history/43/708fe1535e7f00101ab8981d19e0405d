@@ -1,0 +1,51 @@
+package com.fitness.userservice.services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.fitness.userservice.dto.RegisterRequestDTO;
+import com.fitness.userservice.dto.UserResponseDTO;
+import com.fitness.userservice.model.User;
+import com.fitness.userservice.repo.UserRepository;
+
+@Service
+public class UserService {
+
+	@Autowired
+	private UserRepository userRepository;
+	
+	
+	
+	
+	public UserResponseDTO registerUser(RegisterRequestDTO registerUser)
+	{
+		if(userRepository.existsByEmail(registerUser.getEmail()))
+		{
+			throw new RuntimeException("Email Already Exist");
+		}
+		
+		User user = new User();
+		user.setEmail(registerUser.getEmail());
+		user.setPassword(registerUser.getPassword());
+		user.setFirstName(registerUser.getFirstName());
+		user.setLastName(registerUser.getLastName());
+		User saveUser = userRepository.save(user);
+		UserResponseDTO userRespose = new UserResponseDTO();
+		
+		userRespose.setId(saveUser.getId());
+		userRespose.setEmail(saveUser.getEmail());
+		userRespose.setFirstName(saveUser.getFirstName());
+		userRespose.setLastName(saveUser.getLastName());
+		userRespose.setPassword(saveUser.getPassword());
+		userRespose.setCreatedAt(saveUser.getCreatedAt());
+		userRespose.setUpdatedAt(saveUser.getUpdatedAt());
+		return userRespose;
+	}
+
+
+
+
+	public UserResponseDTO getUserProfile(String userId) {
+		User user = userRepository.findById(userId).orElseThrow()-> new RuntimeException("User not found");
+	}
+}
