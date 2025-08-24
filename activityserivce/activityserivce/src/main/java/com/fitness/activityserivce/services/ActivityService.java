@@ -13,6 +13,7 @@ import com.fitness.activityserivce.dtos.ActivityResponseDTO;
 import com.fitness.activityserivce.model.Activity;
 import com.fitness.activityserivce.model.Activitytype;
 import com.fitness.activityserivce.repositries.ActivityRepository;
+import com.netflix.discovery.converters.Auto;
  
 
 @Service
@@ -21,17 +22,16 @@ public class ActivityService {
 	@Autowired
 	private ActivityRepository activityRepo;
 	 
+	@Autowired
+	private UserValidationService userValidationService;
 	public ActivityResponseDTO trackActivity(ActivityRequestDTO requestDto)
 	{
-//		Activity activity = new Activity();
-//		activity.setUserId(requestDto.getUserId());
-//		activity.setType(requestDto.getType());
-//		activity.setDuration(requestDto.getDuration());
-//		activity.setCaloriesBurned(requestDto.getCaloriesBurned());
-//		activity.setStartTime(requestDto.getStartTime());
-//		activity.setAdditionalMetrics(requestDto.getAdditionalMetrics());
-//		Activity saveActivity = activityRepo.save(activity);
-//		return mapToResponse(saveActivity);
+		boolean isValidUser = userValidationService.validateUser(requestDto.getUserId());
+		
+		if(!isValidUser)
+		{
+			throw new RuntimeException("User Not Found: "+requestDto.getUserId());
+		}
 		Activity activity = Activity.builder()
 				.userId(requestDto.getUserId())
 				.type(requestDto.getType())
