@@ -1,5 +1,0 @@
-package com.fitness.userservice.repo;
-
-public interface UserRepository {
-
-}
