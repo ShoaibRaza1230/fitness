@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.RuntimeBeanNameReference;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +16,12 @@ import com.fitness.activityserivce.model.Activity;
 import com.fitness.activityserivce.model.Activitytype;
 import com.fitness.activityserivce.repositries.ActivityRepository;
 import com.netflix.discovery.converters.Auto;
+
+import lombok.extern.slf4j.Slf4j;
  
 
 @Service
+@Slf4j
 public class ActivityService {
 
 	@Autowired
@@ -24,6 +29,16 @@ public class ActivityService {
 	 
 	@Autowired
 	private UserValidationService userValidationService;
+	
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
+	
+	@Value("${spring.exchange.name}")
+	private String exchange;
+	
+	@Value("${spring.routing.key}")
+	private String routingKey;
+	
 	public ActivityResponseDTO trackActivity(ActivityRequestDTO requestDto)
 	{
 		boolean isValidUser = userValidationService.validateUser(requestDto.getUserId());
@@ -41,6 +56,14 @@ public class ActivityService {
 				.additionalMetrics(requestDto.getAdditionalMetrics())
 				.build();
 		Activity saveActivity = activityRepo.save(activity);
+		
+		//publish to RabbitMQ
+		try {
+			rabbitTemplate.convertAndSend(exchange, routingKey, saveActivity);
+		}catch(Exception e)
+		{
+			log.error("Failed to publish activity on RabbitMq");
+		}
 		return mapToResponse(saveActivity);
 }
 	private ActivityResponseDTO mapToResponse(Activity activity)
